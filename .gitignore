@@ -1,0 +1,12 @@
+.DS_Store
+*.pyc
+*.egg-info
+*.swp
+tags
+refrappe/docs/current
+refrappe/www/webreaction/
+refrappe/www/deskreaction/
+refrappe/public/eweb
+refrappe/public/edesk
+refrappe/public/websrc
+refrappe/public/desksrc

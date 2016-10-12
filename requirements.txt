@@ -1,0 +1,4 @@
+frappe
+pymongo
+bcrypt
+python-meteor
