@@ -115,14 +115,14 @@ def after_install():
 
 	info = """
 		**************************************************************
-		*   Please run 												 *
-		*		bench refrappe set-admin-password					 *
-		*														 	 *
-		*   Every time you need to change admin password you     	 *
-		*   must run bench refrappe set-admin-password 				 *
-		*   to set a new password for administrator.             	 *
-		*                                                        	 *
-		*   Please run bench refrappe for more help.				 *
+		*   Please run                                               *
+		*       bench refrappe set-admin-password                    *
+		*                                                            *
+		*   Every time you need to change admin password you         *
+		*   must run bench refrappe set-admin-password               *
+		*   to set a new password for administrator.                 *
+		*                                                            *
+		*   Please run bench refrappe for more help.                 *
 		**************************************************************
 	"""
 	print info
