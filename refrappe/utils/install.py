@@ -14,17 +14,12 @@ def git(*args):
 
 
 def install_desk():
-	#site_path = frappe.get_site_path()
+
 	module_path = frappe.get_module_path("refrappe")
 	reaction_home = os.path.abspath(os.path.join(module_path, ".."))
 	reaction_www = os.path.abspath(os.path.join(reaction_home, "www"))
 	reaction_desk = os.path.abspath(os.path.join(reaction_www, "deskreaction"))
 
-	#make webreaction folder
-	#frappe.create_folder(reaction_web)
-
-	#git clone https://github.com/reactioncommerce/reaction.git
-	#git("clone", "https://github.com/reactioncommerce/reaction.git")
 	run_cmd(reaction_www, "git", "clone", "https://github.com/reactioncommerce/reaction.git", "deskreaction")
 
 	#install meteor npm packages
@@ -55,17 +50,11 @@ def install_desk():
 
 
 def install_web():
-	#site_path = frappe.get_site_path()
 	module_path = frappe.get_module_path("refrappe")
 	reaction_home = os.path.abspath(os.path.join(module_path, ".."))
 	reaction_www = os.path.abspath(os.path.join(reaction_home, "www"))
 	reaction_web = os.path.abspath(os.path.join(reaction_www, "webreaction"))
 
-	#make webreaction folder
-	#frappe.create_folder(reaction_web)
-
-	#git clone https://github.com/reactioncommerce/reaction.git
-	#git("clone", "https://github.com/reactioncommerce/reaction.git")
 	run_cmd(reaction_www, "git", "clone", "https://github.com/reactioncommerce/reaction.git", "webreaction")
 
 
@@ -127,13 +116,13 @@ def after_install():
 	info = """
 		**************************************************************
 		*   Please run 												 *
-		*		bench refrappe set-admin-password			 *
+		*		bench refrappe set-admin-password					 *
 		*														 	 *
 		*   Every time you need to change admin password you     	 *
-		*   must run bench refrappe set-admin-password 	 *
+		*   must run bench refrappe set-admin-password 				 *
 		*   to set a new password for administrator.             	 *
 		*                                                        	 *
-		*   Please run bench refrappe for more help.   	 *
+		*   Please run bench refrappe for more help.				 *
 		**************************************************************
 	"""
 	print info

@@ -11,6 +11,19 @@ REACTIONDB = "meteor"
 reaction_web_client = None
 
 
+
+def is_from_reaction(data=None):
+	data = data or frappe.local.form_dict.data
+	if data:
+		obj = json.loads(data)
+		if isinstance(obj, dict):
+			origin = obj.get("efrappe").get("origin")
+			if origin == "efrappe":
+				frappe.local.flags.is_from_efrappe = True
+				return True
+	frappe.local.flags.is_from_efrappe = False
+	return False
+
 def hashpw(pwd):
 	m = hashlib.sha256()
 	m.update(pwd)
@@ -21,6 +34,10 @@ def hashpw(pwd):
 
 def bcrypt_hashpw(pwd):
 	hexpass = hashpw(pwd)
+	return bcrypt.hashpw(hexpass, bcrypt.gensalt(ROUNDS))
+
+
+def bcrypt_only(hexpass):
 	return bcrypt.hashpw(hexpass, bcrypt.gensalt(ROUNDS))
 
 
@@ -86,6 +103,30 @@ def get_user_for_update_password(key, old_password):
 
 	return user
 
+
+@frappe.whitelist(allow_guest=True)
+def update_password(new_password, key=None, old_password=None):
+	from frappe.core.doctype.user.user import update_password as update_pwd, _get_user_for_update_password
+
+	#orinal_new_pwd = new_password
+	original_old_password = old_password
+
+	print "in update_password form_dict: {}".format(frappe.local.form_dict)
+
+
+	if old_password and not is_from_reaction():
+		old_password = hashpw(old_password)
+
+	if not is_from_reaction():
+		new_password = hashpw(new_password)
+		res = _get_user_for_update_password(key, original_old_password)
+		#mongodb_update_password(res['user'], new_password)
+
+	url = update_pwd(new_password, key, old_password)
+
+	return url
+
+"""
 @frappe.whitelist(allow_guest=True)
 def update_password(new_password, key=None, old_password=None):
 	from frappe.core.doctype.user.user import update_password as update_pwd
@@ -130,7 +171,7 @@ def update_password(new_password, key=None, old_password=None):
 
 
 	return url
-
+"""
 
 @frappe.whitelist()
 def verify_password(password):
@@ -214,6 +255,7 @@ frappe.client.insert
 @icloud.com","first_name":"Luis","last_name":"icloud"}
 
 """
+"""
 @frappe.whitelist()
 def insert_user(doc):
 	if isinstance(doc, basestring):
@@ -227,12 +269,17 @@ def insert_user(doc):
 	frappe.local.flags.is_from_efrappe = False
 
 	return doc.as_dict()
+"""
+
+#update mongodb password for user
+def mongodb_update_password(user, hexpass):
+	bcrypt_pwd = bcrypt_only(hexpass)
 
 
 #insert user on mongodb. We need update password yet.
 def mongodb_insert_user(doc, method):
 	#if flag is True user already inserted in mongodb.
-	if frappe.local.flags.is_from_efrappe:
+	if is_from_reaction:
 		return
 
 	#doc here is doc User class
