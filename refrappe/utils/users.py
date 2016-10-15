@@ -349,3 +349,8 @@ def mongodb_insert_user(doc, method):
 
 	db.users.insert_one(user)
 
+
+
+@frappe.whitelist(allow_guest=True)
+def get_logged_user():
+	return frappe.session.user
