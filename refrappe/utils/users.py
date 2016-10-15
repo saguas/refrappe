@@ -120,7 +120,8 @@ def update_password(new_password, key=None, old_password=None):
 	if not is_from_reaction():
 		new_password = hashpw(new_password)
 		res = _get_user_for_update_password(key, original_old_password)
-		#mongodb_update_password(res['user'], new_password)
+		print "res in update_password {}".format(res)
+		mongodb_update_password(res['user'], new_password)
 
 	url = update_pwd(new_password, key, old_password)
 
@@ -273,14 +274,37 @@ def insert_user(doc):
 
 #update mongodb password for user
 def mongodb_update_password(user, hexpass):
+	print "in mongodb_update_password user is {}".format(user)
 	bcrypt_pwd = bcrypt_only(hexpass)
-
+	db = get_mongo_db()
+	db.users.update_one({"emails.address": {"$in": [user]}}, {"$set": {"services.password.bcrypt": bcrypt_pwd}})
 
 #insert user on mongodb. We need update password yet.
 def mongodb_insert_user(doc, method):
 	#if flag is True user already inserted in mongodb.
-	if is_from_reaction:
+	if is_from_reaction():
 		return
 
+	import datetime
+
+	user = frappe._dict({})
+
+	user.emails = [
+			{"address" : doc.email,
+				"verified" : True,
+				"provides" : "default"
+			}
+		]
+
+	user.createdAt = datetime.datetime.utcnow()
+	user.username = doc.name
+	user.services = {
+		"password": {
+			"bcrypt": ""
+		}
+	}
+
+	print "mongodb_insert_user doc is: {} user is {}".format(doc, user)
+	db = get_mongo_db()
+	db.users.insert_one(user)
 	#doc here is doc User class
-	print "mongodb_insert_user doc is: {} o is {}".format(doc.email, method)
