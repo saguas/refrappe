@@ -119,8 +119,14 @@ def validate(doc, method=None):
 
 
 def on_trash(doc, method=None):
-	#remove from mongodb this user if not online
-	None
+	#remove from mongodb user.email.
+	if is_from_reaction():
+		return
+
+	print "removed user {} method {}".format(doc.email, method)
+	db = get_mongo_db()
+	db.users.delete_one({"emails.address": {"$in": [doc.email]}})
+
 
 
 
