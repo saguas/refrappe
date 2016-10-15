@@ -88,6 +88,9 @@ def update_site_files():
 	common_config = frappe.get_file_json("common_site_config.json")
 	#site_path = frappe.get_site_path()
 	#site_config = frappe.get_file_json(os.path.join(site_path, "site_config.json"))
+
+	#meteor.js and node.js use as bcrypt prefix 2a and python use 2b by default
+	common_config["BCRYPT_PREFIX"] = "2a"
 	common_config["DDP_DEFAULT_CONNECTION_URL"] = "http://localhost:3000/"
 	common_config["ROOT_URL_PATH_PREFIX"] = ""
 	common_config["MONGOWEB"] = {

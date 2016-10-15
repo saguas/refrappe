@@ -2,13 +2,42 @@ import hashlib
 import frappe
 import bcrypt
 import json
+import os
 
 
 ROUNDS = 10
 REACTIONDB = "meteor"
 
-
+bcrypt_prefix = None
 reaction_web_client = None
+BASE64_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+
+
+def get_mongo_id(n=17):
+	from random import choice
+
+	id = []
+	for i in range(n):
+		id.append(choice(BASE64_CHARS))
+
+	return "".join(id)
+
+
+def get_reaction_bcrypt_prefix():
+	global bcrypt_prefix
+
+	if bcrypt_prefix:
+		return bcrypt_prefix
+
+	common_config = frappe.get_file_json("common_site_config.json")
+	site_path = frappe.get_site_path()
+	site_config = frappe.get_file_json(os.path.join(site_path, "site_config.json"))
+
+	_bcrypt_prefix = site_config.get("BCRYPT_PREFIX") or common_config.get("BCRYPT_PREFIX") or '2a'
+
+	bcrypt_prefix = bytes(_bcrypt_prefix)
+
+	return bcrypt_prefix
 
 
 
@@ -34,15 +63,17 @@ def hashpw(pwd):
 
 def bcrypt_hashpw(pwd):
 	hexpass = hashpw(pwd)
-	return bcrypt.hashpw(hexpass, bcrypt.gensalt(ROUNDS))
+	bcrypt_prefix = get_reaction_bcrypt_prefix()
+	return bcrypt.hashpw(hexpass, bcrypt.gensalt(rounds=ROUNDS, prefix=bcrypt_prefix))
 
 
 def bcrypt_only(hexpass):
-	return bcrypt.hashpw(hexpass, bcrypt.gensalt(ROUNDS))
+	bcrypt_prefix = get_reaction_bcrypt_prefix()
+	return bcrypt.hashpw(hexpass, bcrypt.gensalt(rounds=ROUNDS, prefix=bcrypt_prefix))
 
 
-def pwd_compare(pwd, bcrypt_hash):
-	return bcrypt.hashpw(pwd, bcrypt_hash)
+def pwd_compare(pwd_sha256, bcrypt_hash):
+	return bcrypt.hashpw(pwd_sha256, bcrypt_hash) == bcrypt_hash
 
 
 def get_userId(email):
@@ -92,27 +123,12 @@ def on_trash(doc, method=None):
 	None
 
 
-def get_user_for_update_password(key, old_password):
-	from frappe.core.doctype.user.user import _get_user_for_update_password
-
-	res = _get_user_for_update_password(key, old_password)
-	if res.get('message'):
-		return None
-	else:
-		user = res['user']
-
-	return user
-
 
 @frappe.whitelist(allow_guest=True)
 def update_password(new_password, key=None, old_password=None):
 	from frappe.core.doctype.user.user import update_password as update_pwd, _get_user_for_update_password
 
-	#orinal_new_pwd = new_password
 	original_old_password = old_password
-
-	print "in update_password form_dict: {}".format(frappe.local.form_dict)
-
 
 	if old_password and not is_from_reaction():
 		old_password = hashpw(old_password)
@@ -120,7 +136,6 @@ def update_password(new_password, key=None, old_password=None):
 	if not is_from_reaction():
 		new_password = hashpw(new_password)
 		res = _get_user_for_update_password(key, original_old_password)
-		print "res in update_password {}".format(res)
 		mongodb_update_password(res['user'], new_password)
 
 	url = update_pwd(new_password, key, old_password)
@@ -274,7 +289,6 @@ def insert_user(doc):
 
 #update mongodb password for user
 def mongodb_update_password(user, hexpass):
-	print "in mongodb_update_password user is {}".format(user)
 	bcrypt_pwd = bcrypt_only(hexpass)
 	db = get_mongo_db()
 	db.users.update_one({"emails.address": {"$in": [user]}}, {"$set": {"services.password.bcrypt": bcrypt_pwd}})
@@ -287,8 +301,14 @@ def mongodb_insert_user(doc, method):
 
 	import datetime
 
+	#from bson.objectid import ObjectId
+
+
 	user = frappe._dict({})
 
+	#objid = ObjectId()
+	#user._id = str(objid)
+	user._id = get_mongo_id()
 	user.emails = [
 			{"address" : doc.email,
 				"verified" : True,
@@ -301,10 +321,31 @@ def mongodb_insert_user(doc, method):
 	user.services = {
 		"password": {
 			"bcrypt": ""
+		},
+		"resume": {
+			"loginTokens": []
 		}
 	}
 
-	print "mongodb_insert_user doc is: {} user is {}".format(doc, user)
+	user.profile = {
+		"frappe_login": False
+	}
 	db = get_mongo_db()
+
+	host = frappe.local.request.host.split(":")
+	domain = host[0]
+	shop = db.Shops.find_one({"domains": domain})
+	shopid = shop.get("_id")
+	user.roles = {}
+	user.roles[shopid] = [
+			"account/profile",
+			"guest",
+			"product",
+			"tag",
+			"index",
+			"cart/checkout",
+			"cart/completed"
+		]
+
 	db.users.insert_one(user)
-	#doc here is doc User class
+
