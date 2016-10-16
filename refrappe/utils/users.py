@@ -151,6 +151,16 @@ def update_password(new_password, key=None, old_password=None):
 
 	return url
 
+
+@frappe.whitelist(allow_guest=False)
+def reset_password(email, new_password):
+	print "resetPassword email {} new_password {}".format(email, new_password)
+	frappe.only_for("Administrator")
+	if email:
+		from frappe.utils.password import update_password
+		#user = frappe.get_doc("User", email)
+		update_password(email, new_password)
+
 """
 @frappe.whitelist(allow_guest=True)
 def update_password(new_password, key=None, old_password=None):
