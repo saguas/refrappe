@@ -94,6 +94,7 @@ def get_mongo_db():
 	client = get_mongo_client()
 	return client[REACTIONDB]
 
+
 def get_mongo_user_password(username):
 	db = get_mongo_db()
 	users = db.users
@@ -109,6 +110,7 @@ def validate(doc, method=None):
 		Validate users inserts and updates. Hash + bcrypt password for compatibility with reaction ecommerce app.
 		Call reaction to create user in mongodb.
 	"""
+	print "validate doc {} method {}".format(doc, method)
 	if doc.get("__islocal"):#this is an insert
 		return
 	else:#this is an update. Check if password has changed
@@ -134,6 +136,7 @@ def on_trash(doc, method=None):
 def update_password(new_password, key=None, old_password=None):
 	from frappe.core.doctype.user.user import update_password as update_pwd, _get_user_for_update_password
 
+	print "update password new {}".format(new_password)
 	original_old_password = old_password
 
 	if old_password and not is_from_reaction():
@@ -215,7 +218,8 @@ def test_password_strength(new_password, key=None, old_password=None):
 	return test_pwd_strength(new_password, key, old_password)
 
 
-
+#on_logout {'items': u'["luisfernandes@eapelacao.pt"]', 'cmd': u'frappe.desk.reportview.delete_items', 'doctype': u'User'}
+#on_logout {'cmd': u'logout', 'data': '{"efrappe":{"origin":"efrappe"}}'}
 def on_logout():
 	print "on_logout {}".format(frappe.local.form_dict)
 	if frappe.session.user == "Guest":
@@ -231,6 +235,14 @@ def on_logout():
 
 	#logout from frappe desk
 	db = get_mongo_db()
+	#if some user is remove, he is logged out by frappe and cmd is 'frappe.desk.reportview.delete_items' and doctype is 'User'
+	#{'items': u'["someusername@domain.xxx"]', 'cmd': u'frappe.desk.reportview.delete_items', 'doctype': u'User'}
+	if frappe.local.form_dict.cmd == 'frappe.desk.reportview.delete_items' and frappe.local.form_dict.doctype == 'User':
+		items = json.loads(frappe.local.form_dict.items)
+		for email in items:
+			db.users.update_one({"emails.address": {"$in": [email]}}, {"$set": {"profile.frappe_login": False}})
+		return
+
 	email = frappe.session.user
 	if email == "Administrator":
 		user = frappe.get_doc("User", email)
@@ -323,7 +335,7 @@ def mongodb_insert_user(doc, method):
 		]
 
 	user.createdAt = datetime.datetime.utcnow()
-	user.username = doc.name
+	user.username = doc.username or doc.name
 	user.services = {
 		"password": {
 			"bcrypt": ""
@@ -340,6 +352,9 @@ def mongodb_insert_user(doc, method):
 
 	host = frappe.local.request.host.split(":")
 	domain = host[0]
+	if domain and domain.startswith('www.'):
+		domain = domain[4:]
+
 	shop = db.Shops.find_one({"domains": domain})
 	shopid = shop.get("_id")
 	user.roles = {}

@@ -30,6 +30,10 @@ def nginx():
 			try_files /assets/refrappe/eweb/public/$uri /assets/refrappe/eweb/$uri @reaction;
 		}
 
+		location =/reaction/desk {
+			rewrite ^/reaction/desk$ /desk redirect;
+		}
+
 		location ~ /login {
 			if ($request_method = POST){
 			  error_page 418 = @webserver;
