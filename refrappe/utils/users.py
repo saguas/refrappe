@@ -42,14 +42,18 @@ def get_reaction_bcrypt_prefix():
 
 
 def is_from_reaction(data=None):
-	data = data or frappe.local.form_dict.data
+	# Here we get from frappe first and if not present the from data (the default)
+	# frappe parameter is in the case frappe use data. For instance in the case of create user API request.
+	data = data or frappe.local.form_dict.frappe or frappe.local.form_dict.data
 	if data:
 		obj = json.loads(data)
 		if isinstance(obj, dict):
-			origin = obj.get("efrappe").get("origin")
-			if origin == "efrappe":
-				frappe.local.flags.is_from_efrappe = True
-				return True
+			efrappe = obj.get("efrappe")
+			if efrappe:
+				origin = efrappe.get("origin")
+				if origin == "efrappe":
+					frappe.local.flags.is_from_efrappe = True
+					return True
 	frappe.local.flags.is_from_efrappe = False
 	return False
 
@@ -235,6 +239,7 @@ def on_logout():
 	if frappe.session.user == "Guest":
 		print "user Guest, do nothing!!"
 		return
+	"""
 	data = frappe.local.form_dict.data
 	if data:
 		obj = json.loads(data)
@@ -242,7 +247,9 @@ def on_logout():
 			origin = obj.get("efrappe").get("origin")
 			if origin == "efrappe":
 				return
-
+	"""
+	if is_from_reaction():
+		return
 	#logout from frappe desk
 	db = get_mongo_db()
 	#if some user is remove, he is logged out by frappe and cmd is 'frappe.desk.reportview.delete_items' and doctype is 'User'

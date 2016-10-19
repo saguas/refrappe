@@ -44,8 +44,8 @@ def set_meteor_config():
 	meteor_config["DDP_DEFAULT_CONNECTION_URL"] = site_config.get("DDP_DEFAULT_CONNECTION_URL") or common_config.get("DDP_DEFAULT_CONNECTION_URL") or "http://localhost:3000/"
 	meteor_config["ROOT_URL_PATH_PREFIX"] = site_config.get("ROOT_URL_PATH_PREFIX") or common_config.get("ROOT_URL_PATH_PREFIX") or ""
 	root_url = site_config.get("ROOT_URL") or common_config.get("ROOT_URL") or "http://localhost:3000"
-	if (not root_url.endswith("/")):
-		root_url = root_url + "/"
+	#if (not root_url.endswith("/")):
+	#	root_url = root_url + "/"
 	meteor_config["ROOT_URL"] = root_url
 
 

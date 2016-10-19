@@ -78,6 +78,11 @@ def before_start():
 				npm install -g reaction-cli
 
 		third:
+			The following is necessary for reaction to make url properly
+			export ROOT_URL="http://localhost" ; make it permanente (~/.bash_profile) for instance
+
+			Then:
+
 			run bench refrappe nginx to see how to config nginx for reaction ecommerce app
 
 		fourth:

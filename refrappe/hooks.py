@@ -81,7 +81,7 @@ after_install = "refrappe.utils.install.after_install"
 
 doc_events = {
 	"User": {
-		"validate": "refrappe.utils.users.validate",
+		#"validate": "refrappe.utils.users.validate",
 		"on_trash":	"refrappe.utils.users.on_trash",
 		"after_insert":	"refrappe.utils.users.mongodb_insert_user"
 	}
