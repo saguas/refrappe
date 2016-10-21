@@ -255,7 +255,9 @@ def on_logout():
 	#if some user is remove, he is logged out by frappe and cmd is 'frappe.desk.reportview.delete_items' and doctype is 'User'
 	#{'items': u'["someusername@domain.xxx"]', 'cmd': u'frappe.desk.reportview.delete_items', 'doctype': u'User'}
 	if frappe.local.form_dict.cmd == 'frappe.desk.reportview.delete_items' and frappe.local.form_dict.doctype == 'User':
-		items = json.loads(frappe.local.form_dict.items)
+		items = frappe.local.form_dict.get("items")
+		if isinstance(items, basestring):
+			items = json.loads(items)
 		for email in items:
 			db.users.update_one({"emails.address": {"$in": [email]}}, {"$set": {"profile.frappe_login": False}})
 		return
