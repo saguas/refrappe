@@ -333,6 +333,7 @@ def mongodb_update_password(user, hexpass):
 #insert user on mongodb. We need update password yet.
 def mongodb_insert_user(doc, method):
 	#if flag is True user already inserted in mongodb.
+	print "mongodb_insert_user form_dict {}".format(frappe.local.form_dict)
 	if is_from_reaction():
 		return
 

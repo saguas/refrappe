@@ -117,6 +117,8 @@ doc_events = {
 # ------------------------------
 #
 override_whitelisted_methods = {
+	#"frappe.www.login.login_oauth_user": "refrappe.utils.integration.login_oauth_user",
+	#"frappe.www.login.login_via_token": "refrappe.utils.integration.login_via_token",
 	"frappe.core.doctype.user.user.update_password": "refrappe.utils.users.update_password",
 	"frappe.core.doctype.user.user.verify_password": "refrappe.utils.users.verify_password",
 	"frappe.core.doctype.user.user.test_password_strength": "refrappe.utils.users.test_password_strength"
